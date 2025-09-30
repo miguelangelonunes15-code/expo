@@ -1,4 +1,712 @@
----
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClubeApp - Controle de Alunos</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --gray: #95a5a6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 1.5rem;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        nav ul li a:hover, nav ul li a.active {
+            background-color: rgba(255,255,255,0.2);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-info span {
+            margin-right: 10px;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        main {
+            padding: 2rem 0;
+        }
+        
+        .section-title {
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        /* Tabela de alunos */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .status-present {
+            color: var(--secondary);
+            font-weight: bold;
+        }
+        
+        .status-absent {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .attendance-btn {
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        
+        .present-btn {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .absent-btn {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        /* QR Code */
+        .qr-container {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        #qrcode {
+            display: inline-block;
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Scanner */
+        .scanner-container {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        #scanner {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            margin: 1rem auto;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+        }
+        
+        /* Atividades */
+        .activities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .activity-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            transition: transform 0.3s;
+        }
+        
+        .activity-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .activity-title {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .activity-info {
+            margin-bottom: 1rem;
+            color: var(--gray);
+        }
+        
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            nav ul {
+                margin-top: 1rem;
+                justify-content: center;
+            }
+            
+            nav ul li {
+                margin: 0 0.5rem;
+            }
+            
+            .user-info {
+                margin-top: 1rem;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab {
+                flex: 1;
+                min-width: 120px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">ClubeApp</div>
+                <nav>
+                    <ul>
+                        <li><a href="#" class="nav-link active" data-target="dashboard">Dashboard</a></li>
+                        <li><a href="#" class="nav-link" data-target="attendance">Controle de Presença</a></li>
+                        <li><a href="#" class="nav-link" data-target="activities">Atividades</a></li>
+                        <li><a href="#" class="nav-link" data-target="students">Alunos</a></li>
+                    </ul>
+                </nav>
+                <div class="user-info">
+                    <span>Professor João</span>
+                    <button class="btn btn-primary" id="logout-btn">Sair</button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="container">
+        <!-- Dashboard -->
+        <section id="dashboard" class="section">
+            <h2 class="section-title">Dashboard</h2>
+            
+            <div class="stats-grid">
+                <div class="card">
+                    <h3>Total de Alunos</h3>
+                    <p class="stat-number">42</p>
+                </div>
+                
+                <div class="card">
+                    <h3>Presenças Hoje</h3>
+                    <p class="stat-number">35</p>
+                </div>
+                
+                <div class="card">
+                    <h3>Atividades Ativas</h3>
+                    <p class="stat-number">6</p>
+                </div>
+                
+                <div class="card">
+                    <h3>Taxa de Presença</h3>
+                    <p class="stat-number">83%</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Próximas Atividades</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Atividade</th>
+                                <th>Data</th>
+                                <th>Horário</th>
+                                <th>Local</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Aula de Natação - Iniciantes</td>
+                                <td>15/10/2023</td>
+                                <td>14:00 - 15:30</td>
+                                <td>Piscina Principal</td>
+                            </tr>
+                            <tr>
+                                <td>Treino de Futebol - Sub-15</td>
+                                <td>16/10/2023</td>
+                                <td>16:00 - 17:30</td>
+                                <td>Campo 2</td>
+                            </tr>
+                            <tr>
+                                <td>Aula de Judô - Avançado</td>
+                                <td>17/10/2023</td>
+                                <td>09:00 - 10:30</td>
+                                <td>Dojô Central</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Controle de Presença -->
+        <section id="attendance" class="section hidden">
+            <h2 class="section-title">Controle de Presença</h2>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="manual">Chamada Manual</div>
+                <div class="tab" data-tab="qrcode">QR Code</div>
+                <div class="tab" data-tab="scanner">Ler QR Code</div>
+            </div>
+            
+            <!-- Chamada Manual -->
+            <div id="manual" class="tab-content">
+                <div class="card">
+                    <h3>Lista de Alunos - Aula de Natação</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="student-list">
+                                <!-- Lista de alunos será preenchida via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 1rem; text-align: right;">
+                        <button class="btn btn-primary" id="save-attendance">Salvar Chamada</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gerar QR Code -->
+            <div id="qrcode-tab" class="tab-content hidden">
+                <div class="card">
+                    <div class="qr-container">
+                        <h3>QR Code para Presença</h3>
+                        <p>Este QR Code é válido por 15 minutos. Os alunos devem escaneá-lo para registrar presença.</p>
+                        <div id="qrcode"></div>
+                        <button class="btn btn-secondary" id="generate-qr">Gerar Novo QR Code</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ler QR Code -->
+            <div id="scanner-tab" class="tab-content hidden">
+                <div class="card">
+                    <div class="scanner-container">
+                        <h3>Ler QR Code do Aluno</h3>
+                        <p>Posicione o QR Code do aluno dentro da área abaixo.</p>
+                        <div id="scanner">
+                            <p>Área do Scanner (simulação)</p>
+                        </div>
+                        <button class="btn btn-primary" id="scan-btn">Iniciar Leitura</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Atividades -->
+        <section id="activities" class="section hidden">
+            <h2 class="section-title">Atividades do Clube</h2>
+            
+            <div class="activities-grid">
+                <div class="activity-card">
+                    <h3 class="activity-title">Natação - Iniciantes</h3>
+                    <div class="activity-info">
+                        <p><strong>Horário:</strong> Segunda e Quarta, 14:00-15:30</p>
+                        <p><strong>Local:</strong> Piscina Principal</p>
+                        <p><strong>Professor:</strong> Carlos Silva</p>
+                    </div>
+                    <p>Introdução às técnicas básicas de natação para iniciantes.</p>
+                </div>
+                
+                <div class="activity-card">
+                    <h3 class="activity-title">Futebol - Sub-15</h3>
+                    <div class="activity-info">
+                        <p><strong>Horário:</strong> Terça e Quinta, 16:00-17:30</p>
+                        <p><strong>Local:</strong> Campo 2</p>
+                        <p><strong>Professor:</strong> Roberto Santos</p>
+                    </div>
+                    <p>Treinamento técnico e tático para jogadores sub-15.</p>
+                </div>
+                
+                <div class="activity-card">
+                    <h3 class="activity-title">Judô - Avançado</h3>
+                    <div class="activity-info">
+                        <p><strong>Horário:</strong> Segunda e Sexta, 09:00-10:30</p>
+                        <p><strong>Local:</strong> Dojô Central</p>
+                        <p><strong>Professor:</strong> Ana Takahashi</p>
+                    </div>
+                    <p>Aperfeiçoamento de técnicas para alunos avançados.</p>
+                </div>
+                
+                <div class="activity-card">
+                    <h3 class="activity-title">Basquete - Juvenil</h3>
+                    <div class="activity-info">
+                        <p><strong>Horário:</strong> Quarta e Sexta, 15:00-16:30</p>
+                        <p><strong>Local:</strong> Quadra Coberta</p>
+                        <p><strong>Professor:</strong> Marcos Oliveira</p>
+                    </div>
+                    <p>Desenvolvimento de fundamentos e táticas de basquete.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Alunos -->
+        <section id="students" class="section hidden">
+            <h2 class="section-title">Lista de Alunos</h2>
+            
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Idade</th>
+                                <th>Atividade</th>
+                                <th>Telefone</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Ana Silva</td>
+                                <td>14</td>
+                                <td>Natação - Iniciantes</td>
+                                <td>(11) 99999-9999</td>
+                                <td class="status-present">Ativo</td>
+                            </tr>
+                            <tr>
+                                <td>Bruno Costa</td>
+                                <td>15</td>
+                                <td>Futebol - Sub-15</td>
+                                <td>(11) 98888-8888</td>
+                                <td class="status-present">Ativo</td>
+                            </tr>
+                            <tr>
+                                <td>Carlos Lima</td>
+                                <td>13</td>
+                                <td>Judô - Avançado</td>
+                                <td>(11) 97777-7777</td>
+                                <td class="status-absent">Inativo</td>
+                            </tr>
+                            <tr>
+                                <td>Daniela Souza</td>
+                                <td>14</td>
+                                <td>Basquete - Juvenil</td>
+                                <td>(11) 96666-6666</td>
+                                <td class="status-present">Ativo</td>
+                            </tr>
+                            <tr>
+                                <td>Eduardo Martins</td>
+                                <td>15</td>
+                                <td>Natação - Iniciantes</td>
+                                <td>(11) 95555-5555</td>
+                                <td class="status-present">Ativo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Dados de exemplo
+        const students = [
+            { id: 1, name: "Ana Silva", present: false },
+            { id: 2, name: "Bruno Costa", present: false },
+            { id: 3, name: "Carlos Lima", present: false },
+            { id: 4, name: "Daniela Souza", present: false },
+            { id: 5, name: "Eduardo Martins", present: false },
+            { id: 6, name: "Fernanda Oliveira", present: false },
+            { id: 7, name: "Gabriel Santos", present: false },
+            { id: 8, name: "Helena Rodrigues", present: false }
+        ];
+
+        // Navegação entre seções
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove a classe active de todos os links
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                
+                // Adiciona a classe active ao link clicado
+                this.classList.add('active');
+                
+                // Oculta todas as seções
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                
+                // Mostra a seção correspondente
+                const target = this.getAttribute('data-target');
+                document.getElementById(target).classList.remove('hidden');
+            });
+        });
+
+        // Tabs no controle de presença
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove a classe active de todas as tabs
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                
+                // Adiciona a classe active à tab clicada
+                this.classList.add('active');
+                
+                // Oculta todos os conteúdos das tabs
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Mostra o conteúdo correspondente
+                const tabId = this.getAttribute('data-tab');
+                if (tabId === 'manual') {
+                    document.getElementById('manual').classList.remove('hidden');
+                } else if (tabId === 'qrcode') {
+                    document.getElementById('qrcode-tab').classList.remove('hidden');
+                } else if (tabId === 'scanner') {
+                    document.getElementById('scanner-tab').classList.remove('hidden');
+                }
+            });
+        });
+
+        // Preencher lista de alunos
+        function renderStudentList() {
+            const studentList = document.getElementById('student-list');
+            studentList.innerHTML = '';
+            
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${student.name}</td>
+                    <td class="${student.present ? 'status-present' : 'status-absent'}">
+                        ${student.present ? 'Presente' : 'Ausente'}
+                    </td>
+                    <td>
+                        <button class="attendance-btn present-btn" data-id="${student.id}">Presente</button>
+                        <button class="attendance-btn absent-btn" data-id="${student.id}">Ausente</button>
+                    </td>
+                `;
+                
+                studentList.appendChild(row);
+            });
+            
+            // Adicionar eventos aos botões de presença
+            document.querySelectorAll('.present-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const studentId = parseInt(this.getAttribute('data-id'));
+                    markAttendance(studentId, true);
+                });
+            });
+            
+            document.querySelectorAll('.absent-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const studentId = parseInt(this.getAttribute('data-id'));
+                    markAttendance(studentId, false);
+                });
+            });
+        }
+
+        // Marcar presença/ausência
+        function markAttendance(studentId, isPresent) {
+            const student = students.find(s => s.id === studentId);
+            if (student) {
+                student.present = isPresent;
+                renderStudentList();
+            }
+        }
+
+        // Salvar chamada
+        document.getElementById('save-attendance').addEventListener('click', function() {
+            const presentStudents = students.filter(s => s.present).length;
+            const absentStudents = students.filter(s => !s.present).length;
+            
+            alert(`Chamada salva com sucesso!\nPresentes: ${presentStudents}\nAusentes: ${absentStudents}`);
+        });
+
+        // Gerar QR Code
+        function generateQRCode() {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            
+            // Gerar um código único para a sessão
+            const sessionId = 'CLUBE_' + Date.now();
+            
+            // Gerar QR Code
+            QRCode.toCanvas(qrContainer, sessionId, function(error) {
+                if (error) console.error(error);
+            });
+        }
+
+        document.getElementById('generate-qr').addEventListener('click', generateQRCode);
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            renderStudentList();
+            generateQRCode();
+            
+            // Simular leitura de QR Code
+            document.getElementById('scan-btn').addEventListener('click', function() {
+                alert('Scanner ativado! Em uma implementação real, esta funcionalidade usaria a câmera do dispositivo para ler QR Codes.');
+            });
+            
+            // Botão de logout
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                if (confirm('Deseja realmente sair?')) {
+                    alert('Logout realizado com sucesso!');
+                    // Em uma implementação real, redirecionaria para a tela de login
+                }
+            });
+        });
+    </script>
+</body>
+</html>---
 title: Internal distribution
 description: Learn how EAS Build provides shareable URLs for your builds with your team for internal distribution.
 ---
