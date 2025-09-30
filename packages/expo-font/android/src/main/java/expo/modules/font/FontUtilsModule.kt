@@ -33,10 +33,12 @@ open class FontUtilsModule : Module() {
     AsyncFunction("renderToImageAsync") { glyphs: String, options: RenderToImageOptions, promise: Promise ->
       val typeface = ReactFontManager.getInstance().getTypeface(options.fontFamily, Typeface.NORMAL, context.assets)
 
+      val scalingFactor = context.resources.displayMetrics.density
+      val scaledSize = options.size * scalingFactor
       val paint = Paint().apply {
         this.typeface = typeface
         color = options.color
-        textSize = options.size
+        textSize = scaledSize
         isAntiAlias = true
       }
 
@@ -67,8 +69,8 @@ open class FontUtilsModule : Module() {
         promise.resolve(
           mapOf(
             "uri" to Uri.fromFile(output).toString(),
-            "width" to bitmap.width,
-            "height" to bitmap.height
+            "width" to bitmap.width / scalingFactor,
+            "height" to bitmap.height / scalingFactor
           )
         )
       } catch (e: IOException) {
